@@ -19,11 +19,11 @@ const chatConfig = {
     description:
       "Hi! I am an AI agent representing Sylvia Zhang, let's chat :)",
   },
-  suggestedPromptsTitle: "check out some quick questions below!",
+  suggestedPromptsTitle: "Check out some quick questions below!",
   suggestedPrompts: [
-    "I spend too much time with computers.",
-    "I feel overwhelmed trying to keep up with AI trends.",
-    "I am anxious about the future.",
+    "so, what’s your working style like?",
+    "what's your design story?",
+    "when you’re not designing, what are you up to?",
   ],
   chatInputPlaceholder: "Chat with this agent...",
   maxChatHeight: 200,
