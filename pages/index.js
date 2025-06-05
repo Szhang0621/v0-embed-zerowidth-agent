@@ -144,6 +144,7 @@ export default function AgentComponent() {
       color: "#000000",
       padding: "10px 14px",
       border: "1px solid #e5e5e7",
+      borderRadius: "14px 14px 4px 14px",
       margin: "4px 0",
       maxWidth: "75%",
       fontSize: "13px",
@@ -154,6 +155,7 @@ export default function AgentComponent() {
       background: "linear-gradient(135deg, #1271FF 0%, #76A9F4 100%)",
       color: "#ffffff",
       padding: "10px 14px",
+      borderRadius: "14px 14px 14px 4px",
       margin: "4px 0",
       maxWidth: "75%",
       fontSize: "13px",
@@ -184,7 +186,7 @@ export default function AgentComponent() {
     if (conversation.length === 0) {
       return "auto" // Minimal height for initial state
     } else if (conversation.length <= 2) {
-      return "150px" // Small expansion for first interaction
+      return "200px" // Expanded height for first interaction
     } else {
       return "300px" // Full height for ongoing conversation
     }
@@ -194,9 +196,22 @@ export default function AgentComponent() {
     if (conversation.length === 0) {
       return "0px" // No chat area when empty
     } else if (conversation.length <= 2) {
-      return "80px" // Small chat area
+      return "120px" // Chat area for first interaction
     } else {
       return "180px" // Full chat area
+    }
+  }
+
+  // Get shadow style based on loading state
+  const getShadowStyle = () => {
+    if (isLoading) {
+      return {
+        boxShadow: "0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2)",
+        animation: "breathingPulse 2s ease-in-out infinite",
+      }
+    }
+    return {
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)",
     }
   }
 
@@ -210,9 +225,10 @@ export default function AgentComponent() {
           backgroundColor: "#ffffff",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)",
+          borderRadius: "16px",
           overflow: "hidden",
-          transition: "height 0.3s ease",
+          transition: "height 0.3s ease, box-shadow 0.3s ease",
+          ...getShadowStyle(),
         }}
       >
         {/* Header */}
@@ -220,7 +236,6 @@ export default function AgentComponent() {
           className="chat-header"
           style={{
             padding: "12px 16px",
-            borderBottom: conversation.length > 0 ? "1px solid #f0f0f0" : "none",
             textAlign: "center",
           }}
         >
@@ -248,7 +263,7 @@ export default function AgentComponent() {
               gap: "2px",
               height: getChatAreaHeight(),
               overflowY: "auto",
-              padding: "12px",
+              padding: "0 12px 12px 12px",
               backgroundColor: "#ffffff",
               transition: "height 0.3s ease",
             }}
@@ -288,7 +303,7 @@ export default function AgentComponent() {
 
         {/* Input form */}
         <div style={{ padding: "10px 12px" }}>
-          <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input
               type="text"
               id="message"
@@ -298,12 +313,14 @@ export default function AgentComponent() {
               onFocus={handleInputFocus}
               style={{
                 flexGrow: 1,
-                padding: "8px 12px",
+                padding: "10px 12px",
                 border: "1px solid #e5e5e7",
+                borderRadius: "20px",
                 outline: "none",
                 backgroundColor: "#f5f5f7",
                 fontSize: "13px",
                 fontFamily: "inherit",
+                height: "16px", // Fixed height for alignment
               }}
             />
             <button
@@ -316,14 +333,16 @@ export default function AgentComponent() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                borderRadius: "50%",
                 backgroundColor: isLoading || !message.trim() ? "#e5e5e7" : "#1271FF",
                 color: "#ffffff",
-                height: "32px",
-                width: "32px",
+                height: "36px", // Same height as input + padding
+                width: "36px",
                 border: "none",
                 cursor: isLoading || !message.trim() ? "default" : "pointer",
                 opacity: isLoading || !message.trim() ? 0.5 : 1,
                 transition: "all 0.2s ease",
+                flexShrink: 0, // Prevent button from shrinking
               }}
             >
               {!isLoading ? (
@@ -438,6 +457,17 @@ export default function AgentComponent() {
           }
           to {
             transform: rotate(360deg);
+          }
+        }
+        @keyframes breathingPulse {
+          0% {
+            box-shadow: 0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2);
+          }
+          50% {
+            box-shadow: 0 6px 30px rgba(118, 169, 244, 0.4), 0 2px 6px rgba(118, 169, 244, 0.3);
+          }
+          100% {
+            box-shadow: 0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2);
           }
         }
       `}</style>
