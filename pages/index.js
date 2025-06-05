@@ -444,6 +444,3 @@ export default function AgentComponent() {
     </div>
   )
 }
-
-}
-
