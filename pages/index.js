@@ -33,6 +33,7 @@ export default function AgentComponent() {
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
   const [sessionId, setSessionId] = useState("")
   const [userId, setUserId] = useState("")
   const [isSubmitHovered, setIsSubmitHovered] = useState(false)
@@ -52,18 +53,27 @@ export default function AgentComponent() {
     return () => clearInterval(rotationInterval)
   }, [])
 
+  // Modified scroll function to only scroll within the chat container
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
   }
 
+  // Only scroll when there are messages and avoid initial scroll
   useEffect(() => {
-    if (document.querySelector(".chat-container")) {
-      scrollToBottom()
+    if (conversation.length > 0) {
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        scrollToBottom()
+      }, 100)
     }
   }, [conversation])
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    // Prevent default form submission behavior that might cause scrolling
+    e.stopPropagation()
     submitMessage(message)
   }
 
@@ -133,7 +143,6 @@ export default function AgentComponent() {
       backgroundColor: "#ffffff",
       color: "#000000",
       padding: "10px 14px",
-      borderRadius: "14px 14px 4px 14px",
       border: "1px solid #e5e5e7",
       margin: "4px 0",
       maxWidth: "75%",
@@ -142,10 +151,9 @@ export default function AgentComponent() {
     },
     agent: {
       alignSelf: "flex-start",
-      backgroundColor: "#1271FF",
+      background: "linear-gradient(135deg, #1271FF 0%, #76A9F4 100%)",
       color: "#ffffff",
       padding: "10px 14px",
-      borderRadius: "14px 14px 14px 4px",
       margin: "4px 0",
       maxWidth: "75%",
       fontSize: "13px",
@@ -160,121 +168,224 @@ export default function AgentComponent() {
     }, 0)
   }
 
+  // Prevent input focus from scrolling the page
+  const handleInputFocus = (e) => {
+    e.preventDefault()
+    // Prevent the default scroll behavior
+    if (e.target.scrollIntoView) {
+      e.target.scrollIntoView = () => {}
+    }
+  }
+
   const currentSuggestion = chatConfig.suggestedPrompts[currentSuggestionIndex]
 
-  return (
-    <div
-      style={{
-        width: "267px",
-        height: "402px",
-        margin: "0 auto",
-        fontFamily: "PP Neue Montreal, -apple-system, BlinkMacSystemFont, sans-serif",
-        backgroundColor: "#ffffff",
-        display: "flex",
-        flexDirection: "column",
-        border: "2px solid #000000",
-        borderRadius: "12px",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        className="chat-header"
-        style={{
-          padding: "12px 16px",
-          borderBottom: "1px solid #f0f0f0",
-          textAlign: "center",
-        }}
-      >
-        <div
-          className="chat-title"
-          style={{
-            color: "#000000",
-            fontSize: "16px",
-            fontWeight: "500",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {chatConfig.header.title}
-        </div>
-      </div>
+  // Calculate dynamic height based on conversation state
+  const getContainerHeight = () => {
+    if (conversation.length === 0) {
+      return "auto" // Minimal height for initial state
+    } else if (conversation.length <= 2) {
+      return "150px" // Small expansion for first interaction
+    } else {
+      return "300px" // Full height for ongoing conversation
+    }
+  }
 
-      {/* Chat container */}
+  const getChatAreaHeight = () => {
+    if (conversation.length === 0) {
+      return "0px" // No chat area when empty
+    } else if (conversation.length <= 2) {
+      return "80px" // Small chat area
+    } else {
+      return "180px" // Full chat area
+    }
+  }
+
+  return (
+    <div style={{ width: "267px", fontFamily: "PP Neue Montreal, -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {/* Main chatbox */}
       <div
-        className="chat-container"
         style={{
+          width: "267px",
+          height: getContainerHeight(),
+          backgroundColor: "#ffffff",
           display: "flex",
           flexDirection: "column",
-          gap: "2px",
-          flex: 1,
-          overflowY: "auto",
-          padding: "12px",
-          backgroundColor: "#ffffff",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)",
+          overflow: "hidden",
+          transition: "height 0.3s ease",
         }}
       >
-        {conversation.length === 0 && (
+        {/* Header */}
+        <div
+          className="chat-header"
+          style={{
+            padding: "12px 16px",
+            borderBottom: conversation.length > 0 ? "1px solid #f0f0f0" : "none",
+            textAlign: "center",
+          }}
+        >
           <div
+            className="chat-title"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              color: "#8e8e93",
-              fontSize: "13px",
-              textAlign: "center",
-              opacity: 0.7,
+              color: "#000000",
+              fontSize: "16px",
+              fontWeight: "500",
+              letterSpacing: "-0.01em",
             }}
           >
-            Start a conversation...
+            {chatConfig.header.title}
+          </div>
+        </div>
+
+        {/* Chat container - only visible when there are messages */}
+        {conversation.length > 0 && (
+          <div
+            ref={chatContainerRef}
+            className="chat-container"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+              height: getChatAreaHeight(),
+              overflowY: "auto",
+              padding: "12px",
+              backgroundColor: "#ffffff",
+              transition: "height 0.3s ease",
+            }}
+          >
+            {conversation.map((msg, index) => (
+              <div key={index} style={msg.role === "user" ? bubbleStyles.user : bubbleStyles.agent}>
+                {msg.role === "agent" ? (
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p style={{ margin: 0, color: "#ffffff" }}>{children}</p>,
+                      strong: ({ children }) => <strong style={{ color: "#ffffff" }}>{children}</strong>,
+                      em: ({ children }) => <em style={{ color: "#ffffff" }}>{children}</em>,
+                      code: ({ children }) => (
+                        <code
+                          style={{
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            padding: "2px 4px",
+                            fontSize: "12px",
+                            color: "#ffffff",
+                          }}
+                        >
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
           </div>
         )}
-        {conversation.map((msg, index) => (
-          <div key={index} style={msg.role === "user" ? bubbleStyles.user : bubbleStyles.agent}>
-            {msg.role === "agent" ? (
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => (
-                    <p style={{ margin: 0, color: msg.role === "agent" ? "#ffffff" : "#000000" }}>{children}</p>
-                  ),
-                  strong: ({ children }) => (
-                    <strong style={{ color: msg.role === "agent" ? "#ffffff" : "#000000" }}>{children}</strong>
-                  ),
-                  em: ({ children }) => (
-                    <em style={{ color: msg.role === "agent" ? "#ffffff" : "#000000" }}>{children}</em>
-                  ),
-                  code: ({ children }) => (
-                    <code
-                      style={{
-                        backgroundColor: msg.role === "agent" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.05)",
-                        padding: "2px 4px",
-                        borderRadius: "3px",
-                        color: msg.role === "agent" ? "#ffffff" : "#000000",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {children}
-                    </code>
-                  ),
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
-            ) : (
-              msg.content
-            )}
+
+        {/* Input form */}
+        <div style={{ padding: "10px 12px" }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
+            <input
+              type="text"
+              id="message"
+              placeholder={chatConfig.chatInputPlaceholder}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onFocus={handleInputFocus}
+              style={{
+                flexGrow: 1,
+                padding: "8px 12px",
+                border: "1px solid #e5e5e7",
+                outline: "none",
+                backgroundColor: "#f5f5f7",
+                fontSize: "13px",
+                fontFamily: "inherit",
+              }}
+            />
+            <button
+              type="submit"
+              aria-label="Send prompt"
+              disabled={isLoading || !message.trim()}
+              onMouseOver={() => setIsSubmitHovered(true)}
+              onMouseOut={() => setIsSubmitHovered(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isLoading || !message.trim() ? "#e5e5e7" : "#1271FF",
+                color: "#ffffff",
+                height: "32px",
+                width: "32px",
+                border: "none",
+                cursor: isLoading || !message.trim() ? "default" : "pointer",
+                opacity: isLoading || !message.trim() ? 0.5 : 1,
+                transition: "all 0.2s ease",
+              }}
+            >
+              {!isLoading ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M22 2L11 13"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M22 2L15 22L11 13L2 9L22 2Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="32"
+                    strokeDashoffset="32"
+                    fill="none"
+                  />
+                </svg>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div
+            style={{
+              color: "#ff3b30",
+              padding: "8px 12px",
+              fontSize: "12px",
+              textAlign: "center",
+              borderTop: "1px solid #f0f0f0",
+            }}
+          >
+            Error: {error}
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        )}
       </div>
 
-      {/* Rotating suggestion */}
+      {/* Try ask section - outside the chatbox */}
       <div
         style={{
-          padding: "8px 16px",
-          borderTop: "1px solid #f0f0f0",
+          padding: "8px 0",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          width: "267px",
         }}
       >
         <div
@@ -304,98 +415,6 @@ export default function AgentComponent() {
         </button>
       </div>
 
-      {/* Input form */}
-      <div style={{ padding: "10px 12px", borderTop: "1px solid #f0f0f0" }}>
-        <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
-          <input
-            type="text"
-            id="message"
-            placeholder={chatConfig.chatInputPlaceholder}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            style={{
-              flexGrow: 1,
-              padding: "8px 12px",
-              border: "1px solid #e5e5e7",
-              borderRadius: "16px",
-              outline: "none",
-              backgroundColor: "#f5f5f7",
-              fontSize: "13px",
-              fontFamily: "inherit",
-            }}
-          />
-          <button
-            type="submit"
-            aria-label="Send prompt"
-            disabled={isLoading || !message.trim()}
-            onMouseOver={() => setIsSubmitHovered(true)}
-            onMouseOut={() => setIsSubmitHovered(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "50%",
-              backgroundColor: isLoading || !message.trim() ? "#e5e5e7" : "#1271FF",
-              color: "#ffffff",
-              height: "32px",
-              width: "32px",
-              border: "none",
-              cursor: isLoading || !message.trim() ? "default" : "pointer",
-              opacity: isLoading || !message.trim() ? 0.5 : 1,
-              transition: "all 0.2s ease",
-            }}
-          >
-            {!isLoading ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M22 2L11 13"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M22 2L15 22L11 13L2 9L22 2Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="8"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeDasharray="32"
-                  strokeDashoffset="32"
-                  fill="none"
-                />
-              </svg>
-            )}
-          </button>
-        </form>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div
-          style={{
-            color: "#ff3b30",
-            padding: "8px 12px",
-            fontSize: "12px",
-            textAlign: "center",
-            borderTop: "1px solid #f0f0f0",
-          }}
-        >
-          Error: {error}
-        </div>
-      )}
-
       <style jsx>{`
         .chat-container::-webkit-scrollbar {
           width: 4px;
@@ -405,7 +424,6 @@ export default function AgentComponent() {
         }
         .chat-container::-webkit-scrollbar-thumb {
           background-color: #e5e5e7;
-          border-radius: 4px;
         }
         .chat-container::-webkit-scrollbar-thumb:hover {
           background-color: #d1d1d6;
@@ -425,5 +443,7 @@ export default function AgentComponent() {
       `}</style>
     </div>
   )
+}
+
 }
 
