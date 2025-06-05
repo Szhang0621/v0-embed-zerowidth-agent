@@ -15,13 +15,13 @@ const chatConfig = {
   flowURL:
     "https://api.zerowidth.ai/v1/process/OCWi9PTGrb7OPwZ6FBbp/hAubXpDvbd2FVtSMJF8P",
   header: {
-    title: "Chat with me (the AI me) ;)",
+    title: "curious?chat with AI me ;)",
   },
   suggestedPromptsTitle: "Try ask",
   suggestedPrompts: [
     "so, what’s your working style like?",
     "what's your design story?",
-    "when you’re not designing, what are you up to?",
+    "what do you do outside design?",
   ],
   chatInputPlaceholder: "Ask me anything",
   maxChatHeight: 200,
