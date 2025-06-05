@@ -15,17 +15,15 @@ const chatConfig = {
   flowURL:
     "https://api.zerowidth.ai/v1/process/OCWi9PTGrb7OPwZ6FBbp/hAubXpDvbd2FVtSMJF8P",
   header: {
-    title: "Chat with SYLVIA",
-    description:
-      "Hi! I am an AI agent representing Sylvia Zhang, let's chat :)",
+    title: "Chat with me (the AI me) ;)",
   },
-  suggestedPromptsTitle: "Check out some quick questions below!",
+  suggestedPromptsTitle: "Try ask",
   suggestedPrompts: [
     "so, what’s your working style like?",
     "what's your design story?",
     "when you’re not designing, what are you up to?",
   ],
-  chatInputPlaceholder: "Chat with this agent...",
+  chatInputPlaceholder: "Ask me anything",
   maxChatHeight: 200,
 };
 
