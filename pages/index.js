@@ -112,7 +112,8 @@ export default function AgentComponent() {
       })
 
       if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`)
+        const errorText = await res.text()
+        throw new Error(`Server error: ${res.status} - ${errorText}`)
       }
 
       const data = await res.json()
@@ -140,10 +141,9 @@ export default function AgentComponent() {
   const bubbleStyles = {
     user: {
       alignSelf: "flex-end",
-      backgroundColor: "#ffffff",
-      color: "#000000",
+      backgroundColor: "#000000",
+      color: "#ffffff",
       padding: "10px 14px",
-      border: "1px solid #e5e5e7",
       borderRadius: "14px 14px 4px 14px",
       margin: "4px 0",
       maxWidth: "75%",
@@ -152,9 +152,10 @@ export default function AgentComponent() {
     },
     agent: {
       alignSelf: "flex-start",
-      background: "linear-gradient(135deg, #1271FF 0%, #76A9F4 100%)",
-      color: "#ffffff",
+      backgroundColor: "#E0F1F6",
+      color: "#000000",
       padding: "10px 14px",
+      border: "1px solid #000000",
       borderRadius: "14px 14px 14px 4px",
       margin: "4px 0",
       maxWidth: "75%",
@@ -181,78 +182,148 @@ export default function AgentComponent() {
 
   const currentSuggestion = chatConfig.suggestedPrompts[currentSuggestionIndex]
 
-  // Calculate dynamic height based on conversation state
-  const getContainerHeight = () => {
-    if (conversation.length === 0) {
-      return "auto" // Minimal height for initial state
-    } else if (conversation.length <= 2) {
-      return "200px" // Expanded height for first interaction
-    } else {
-      return "300px" // Full height for ongoing conversation
-    }
-  }
-
-  const getChatAreaHeight = () => {
-    if (conversation.length === 0) {
-      return "0px" // No chat area when empty
-    } else if (conversation.length <= 2) {
-      return "120px" // Chat area for first interaction
-    } else {
-      return "180px" // Full chat area
-    }
-  }
-
-  // Get shadow style based on loading state
-  const getShadowStyle = () => {
-    if (isLoading) {
-      return {
-        boxShadow: "0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2)",
-        animation: "breathingPulse 2s ease-in-out infinite",
-      }
-    }
-    return {
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)",
-    }
-  }
+  // Clock positions for the 8 surrounding dots - 50px distance from center
+  const clockPositions = [
+    { x: 0, y: -50 }, // 12 o'clock
+    { x: 35.36, y: -35.36 }, // 1:30 (45 degrees)
+    { x: 50, y: 0 }, // 3 o'clock
+    { x: 35.36, y: 35.36 }, // 4:30 (135 degrees)
+    { x: 0, y: 50 }, // 6 o'clock
+    { x: -35.36, y: 35.36 }, // 7:30 (225 degrees)
+    { x: -50, y: 0 }, // 9 o'clock
+    { x: -35.36, y: -35.36 }, // 10:30 (315 degrees)
+  ]
 
   return (
-    <div style={{ width: "267px", fontFamily: "PP Neue Montreal, -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ width: "301px", fontFamily: "PP Neue Montreal, -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* Main chatbox */}
       <div
         style={{
-          width: "267px",
-          height: getContainerHeight(),
-          backgroundColor: "#ffffff",
+          width: "301px",
+          height: "360px",
+          backgroundColor: "#E0F1F6",
           display: "flex",
           flexDirection: "column",
           borderRadius: "16px",
           overflow: "hidden",
-          transition: "height 0.3s ease, box-shadow 0.3s ease",
-          ...getShadowStyle(),
+          position: "relative",
+          padding: "30px",
+          boxSizing: "border-box",
         }}
       >
         {/* Header */}
         <div
           className="chat-header"
           style={{
-            padding: "12px 16px",
-            textAlign: "center",
+            position: "relative",
+            marginBottom: "20px",
           }}
         >
           <div
             className="chat-title"
             style={{
               color: "#000000",
-              fontSize: "16px",
+              fontSize: "18px",
               fontWeight: "500",
               letterSpacing: "-0.01em",
+              textAlign: "left",
             }}
           >
-            {chatConfig.header.title}
+            Chat with AI me
           </div>
+
+          {/* Loading dots in top right corner */}
+          {isLoading && (
+            <div
+              style={{
+                position: "absolute",
+                top: "0px",
+                right: "0px",
+                display: "flex",
+                gap: "4px",
+              }}
+            >
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  backgroundColor: "#000000",
+                  borderRadius: "50%",
+                  animation: "loadingDot 1.5s ease-in-out infinite",
+                  animationDelay: "0s",
+                }}
+              />
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  backgroundColor: "#000000",
+                  borderRadius: "50%",
+                  animation: "loadingDot 1.5s ease-in-out infinite",
+                  animationDelay: "0.3s",
+                }}
+              />
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  backgroundColor: "#000000",
+                  borderRadius: "50%",
+                  animation: "loadingDot 1.5s ease-in-out infinite",
+                  animationDelay: "0.6s",
+                }}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Chat container - only visible when there are messages */}
+        {/* Center dots pattern - only visible when no conversation */}
+        {conversation.length === 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "46%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "120px",
+              height: "120px",
+              animation: "breathingPulse 3s ease-in-out infinite",
+            }}
+          >
+            {/* Center dot */}
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "8px",
+                height: "8px",
+                backgroundColor: "#000000",
+                borderRadius: "50%",
+              }}
+            />
+
+            {/* Surrounding dots in clock positions */}
+            {clockPositions.map((position, index) => (
+              <div
+                key={index}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
+                  width: "8px",
+                  height: "8px",
+                  backgroundColor: "#000000",
+                  borderRadius: "50%",
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Chat container - visible when there are messages */}
         {conversation.length > 0 && (
           <div
             ref={chatContainerRef}
@@ -261,11 +332,10 @@ export default function AgentComponent() {
               display: "flex",
               flexDirection: "column",
               gap: "2px",
-              height: getChatAreaHeight(),
+              flex: 1,
               overflowY: "auto",
-              padding: "0 12px 12px 12px",
-              backgroundColor: "#ffffff",
-              transition: "height 0.3s ease",
+              backgroundColor: "transparent",
+              marginBottom: "20px",
             }}
           >
             {conversation.map((msg, index) => (
@@ -273,16 +343,17 @@ export default function AgentComponent() {
                 {msg.role === "agent" ? (
                   <ReactMarkdown
                     components={{
-                      p: ({ children }) => <p style={{ margin: 0, color: "#ffffff" }}>{children}</p>,
-                      strong: ({ children }) => <strong style={{ color: "#ffffff" }}>{children}</strong>,
-                      em: ({ children }) => <em style={{ color: "#ffffff" }}>{children}</em>,
+                      p: ({ children }) => <p style={{ margin: 0, color: "#000000" }}>{children}</p>,
+                      strong: ({ children }) => <strong style={{ color: "#000000" }}>{children}</strong>,
+                      em: ({ children }) => <em style={{ color: "#000000" }}>{children}</em>,
                       code: ({ children }) => (
                         <code
                           style={{
-                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            backgroundColor: "rgba(0, 0, 0, 0.1)",
                             padding: "2px 4px",
+                            borderRadius: "4px",
                             fontSize: "12px",
-                            color: "#ffffff",
+                            color: "#000000",
                           }}
                         >
                           {children}
@@ -301,8 +372,8 @@ export default function AgentComponent() {
           </div>
         )}
 
-        {/* Input form */}
-        <div style={{ padding: "10px 12px" }}>
+        {/* Input form - positioned at bottom */}
+        <div style={{ marginTop: "auto" }}>
           <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input
               type="text"
@@ -313,14 +384,15 @@ export default function AgentComponent() {
               onFocus={handleInputFocus}
               style={{
                 flexGrow: 1,
-                padding: "10px 12px",
-                border: "1px solid #e5e5e7",
-                borderRadius: "20px",
+                padding: "0 16px",
+                border: "1px solid #000000",
+                borderRadius: "15px",
                 outline: "none",
-                backgroundColor: "#f5f5f7",
+                backgroundColor: "#E0F1F6",
                 fontSize: "13px",
                 fontFamily: "inherit",
-                height: "16px", // Fixed height for alignment
+                height: "50px",
+                boxSizing: "border-box",
               }}
             />
             <button
@@ -333,16 +405,17 @@ export default function AgentComponent() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: "50%",
-                backgroundColor: isLoading || !message.trim() ? "#e5e5e7" : "#1271FF",
+                borderRadius: "15px",
+                backgroundColor: "#000000",
                 color: "#ffffff",
-                height: "36px", // Same height as input + padding
-                width: "36px",
+                height: "50px",
+                width: "50px",
                 border: "none",
                 cursor: isLoading || !message.trim() ? "default" : "pointer",
                 opacity: isLoading || !message.trim() ? 0.5 : 1,
                 transition: "all 0.2s ease",
-                flexShrink: 0, // Prevent button from shrinking
+                flexShrink: 0,
+                boxSizing: "border-box",
               }}
             >
               {!isLoading ? (
@@ -389,7 +462,9 @@ export default function AgentComponent() {
               padding: "8px 12px",
               fontSize: "12px",
               textAlign: "center",
-              borderTop: "1px solid #f0f0f0",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderRadius: "8px",
+              marginTop: "8px",
             }}
           >
             Error: {error}
@@ -404,7 +479,7 @@ export default function AgentComponent() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "267px",
+          width: "301px",
         }}
       >
         <div
@@ -423,7 +498,7 @@ export default function AgentComponent() {
             background: "none",
             border: "none",
             padding: 0,
-            color: "#1271FF",
+            color: "#000000",
             fontSize: "12px",
             cursor: "pointer",
             textDecoration: "underline",
@@ -442,14 +517,14 @@ export default function AgentComponent() {
           background: transparent;
         }
         .chat-container::-webkit-scrollbar-thumb {
-          background-color: #e5e5e7;
+          background-color: rgba(0, 0, 0, 0.2);
         }
         .chat-container::-webkit-scrollbar-thumb:hover {
-          background-color: #d1d1d6;
+          background-color: rgba(0, 0, 0, 0.3);
         }
         .chat-container {
           scrollbar-width: thin;
-          scrollbar-color: #e5e5e7 transparent;
+          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
         }
         @keyframes spin {
           from {
@@ -459,15 +534,22 @@ export default function AgentComponent() {
             transform: rotate(360deg);
           }
         }
+        @keyframes loadingDot {
+          0%, 80%, 100% {
+            transform: translateY(0);
+          }
+          40% {
+            transform: translateY(-8px);
+          }
+        }
         @keyframes breathingPulse {
-          0% {
-            box-shadow: 0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2);
+          0%, 100% {
+            opacity: 0.6;
+            transform: translate(-50%, -50%) scale(1);
           }
           50% {
-            box-shadow: 0 6px 30px rgba(118, 169, 244, 0.4), 0 2px 6px rgba(118, 169, 244, 0.3);
-          }
-          100% {
-            box-shadow: 0 4px 20px rgba(18, 113, 255, 0.3), 0 1px 3px rgba(18, 113, 255, 0.2);
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.05);
           }
         }
       `}</style>
