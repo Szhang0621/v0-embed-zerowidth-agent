@@ -15,7 +15,7 @@ const chatConfig = {
   flowURL:
     "https://api.zerowidth.ai/v1/process/OCWi9PTGrb7OPwZ6FBbp/hAubXpDvbd2FVtSMJF8P",
   header: {
-    title: "Chat with AI me ;)",
+    title: "Chat with AI me :)",
   },
   suggestedPromptsTitle: "Try ask",
   suggestedPrompts: [
